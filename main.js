@@ -4,6 +4,7 @@ var express = require("express");
 var bodyParser = require('body-parser');
 var WebSocket = require("ws");
 const fs = require('fs');
+var cors = require('cors')
 
 var http_port = process.env.HTTP_PORT || 3001;
 var p2p_port = process.env.P2P_PORT || 6001;
@@ -36,36 +37,31 @@ var blockchain = [getGenesisBlock()];
 
 var initHttpServer = () => {
     var app = express();
-
-    app.use(function(req, res, next) {
-        res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // update to match the domain you will make the request from
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        next();
-    });
-
+    app.use(cors())
     app.use(bodyParser.json());
 
-    app.get('/blocks', (req, res) => res.send(JSON.stringify(blockchain)));
-    app.post('/mineBlock', (req, res) => {
+    app.get('/blocks', cors(), (req, res) => res.send(JSON.stringify(blockchain)));
+    app.post('/mineBlock', cors(), (req, res) => {
         var newBlock = generateNextBlock(req.body.data);
         addBlock(newBlock);
         broadcast(responseLatestMsg());
         console.log('block added: ' + JSON.stringify(newBlock));
         res.send();
     });
-    app.get('/peers', (req, res) => {
+    app.get('/peers', cors(), (req, res) => {
         res.send(sockets.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort));
     });
-    app.post('/addPeer', (req, res) => {
+    app.post('/addPeer', cors(), (req, res) => {
         connectToPeers([req.body.peer]);
         res.send();
     });
+    app.post('/validateChain', cors(), (req, res) => {
+        console.log(req.body.data)
+        res.send(isValidChain(JSON.parse(req.body.data)))
+    })
     app.listen(http_port, () => console.log('Listening http on port: ' + http_port));
 };
 
-var storeChain = (blocks) => {
-
-}
 
 var initP2PServer = () => {
     var server = new WebSocket.Server({port: p2p_port});
