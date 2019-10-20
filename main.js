@@ -3,10 +3,13 @@ var CryptoJS = require("crypto-js");
 var express = require("express");
 var bodyParser = require('body-parser');
 var WebSocket = require("ws");
+const fs = require('fs');
 
 var http_port = process.env.HTTP_PORT || 3001;
 var p2p_port = process.env.P2P_PORT || 6001;
 var initialPeers = process.env.PEERS ? process.env.PEERS.split(',') : [];
+
+const CHAIN_FILE = "chain.json"
 
 class Block {
     constructor(index, previousHash, timestamp, data, hash) {
@@ -33,6 +36,13 @@ var blockchain = [getGenesisBlock()];
 
 var initHttpServer = () => {
     var app = express();
+
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // update to match the domain you will make the request from
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
+
     app.use(bodyParser.json());
 
     app.get('/blocks', (req, res) => res.send(JSON.stringify(blockchain)));
@@ -53,6 +63,9 @@ var initHttpServer = () => {
     app.listen(http_port, () => console.log('Listening http on port: ' + http_port));
 };
 
+var storeChain = (blocks) => {
+
+}
 
 var initP2PServer = () => {
     var server = new WebSocket.Server({port: p2p_port});
@@ -116,6 +129,16 @@ var calculateHash = (index, previousHash, timestamp, data) => {
 var addBlock = (newBlock) => {
     if (isValidNewBlock(newBlock, getLatestBlock())) {
         blockchain.push(newBlock);
+        // After add into the chain, the blockchain will be stored into a file.
+        fs.exists(CHAIN_FILE, function(exists) {
+            if(exists){
+                fs.unlinkSync(CHAIN_FILE)
+            }
+            fs.writeFile(CHAIN_FILE, JSON.stringify(blockchain), function(stored) {
+                console.log(stored)
+            })
+        })
+        
     }
 };
 
