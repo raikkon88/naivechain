@@ -9,15 +9,13 @@ import axios from 'axios'
 
 axios.defaults.baseURL = "http://" + window.location.hostname + ":3001"
 
-console.log(axios.defaults.baseURL)
-
 function App() {
   return (
     <Router>
       <Grid container>
-        <Grid item xs={12}>
-          <Link to="/">Home</Link>
-          <Link to="/validate">Validate</Link>
+        <Grid item xs={12} style={{ margin:"20px"}}>
+          <Link to="/" variant="outlined" style={{ margin:"10px", textDecoration:"none", color: "blue"}}>Home</Link>
+          <Link to="/validate" variant="outlined" style={{ margin:"10px", textDecoration:"none", color: "blue"}}>Validate</Link>
         </Grid>
         <Switch>
           <Route exact path="/" component={Home} />
